@@ -6,41 +6,70 @@
 #include <vector>
 using namespace std;
 
-class Matrix{
-
-  std::vector<double> mElements; 
-
-public:
-  Matrix(std::vector<double> elements):
-    mElements(elements){}
-
-
-};
-
-
-
-
 
 int main(int argc, char *argv[]) {
+  
+  // Array Indexing
+  int BIGNUM = 100;
+  int ioff[BIGNUM];
+  ioff[0] = 0;
+  for(int i = 1; i < BIGNUM; i++)
+    ioff[i] = ioff[i-1] + i;
+
+
+  int i, j, k, l, ij, kl, ijkl;
+  // Row/Column to one dimensional array indexing transformation
+  // ij = (i>j) ? ioff[i] + j : ioff[j] + i;
+  // ijkl = (ij > kl) ? ioff[ij] + kl : ioff[kl] + ij; //TODO: Verify
+
+  //Read enuc
+  ifstream enucFile;
+  enucFile.open("enuc.dat",ifstream::in);
+  double enuc;
+  enucFile >> enuc;
+  enucFile.close();
  
 
-  ifstream enuc;
-  enuc.open("enuc.dat");
-  char data[100];
+  //Read overlap
+  FILE *input;
+  double val;
+  double overlap[BIGNUM];
+  input = fopen("s.dat", "r");
+  while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
+    i -= 1;
+    j -= 1;
+    ij = (i>j) ? ioff[i] + j : ioff[j] + i;
+    overlap[ij] = val;
+  }
+  fclose(input);
 
-  enuc >> data;
+  //Read kinetic energy
+  double ke[BIGNUM];
+  input = fopen("t.dat", "r");
+  while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
+    i -= 1;
+    j -= 1;
+    ij = (i>j) ? ioff[i] + j : ioff[j] + i;
+    ke[ij] = val;
+  }
+  fclose(input);
+  
 
-  cout << data << endl;
+  //Read nuclear-attraction integrals
+  double nai[BIGNUM];
+  input = fopen("v.dat", "r");
+  while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
+    i -= 1;
+    j -= 1;
+    ij = (i>j) ? ioff[i] + j : ioff[j] + i;
+    nai[ij] = val;
+  }
+  fclose(input);
 
-  std::vector<double> vecta;
-
-  vecta.push_back(1.0);
-  vecta.push_back(2.0);
-  vecta.push_back(3.0);
-  vecta.push_back(4.0);
-
-  Matrix a = Matrix(vecta);
-  int sup = 1;
+  //Core Hamiltonia
+  double coreH[BIGNUM];
+  
+  
 }
 
 
