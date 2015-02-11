@@ -34,40 +34,59 @@ int main(int argc, char *argv[]) {
   FILE *input;
   double val;
   double overlap[BIGNUM];
+  double overlap2[7][7];
   input = fopen("s.dat", "r");
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
     i -= 1;
     j -= 1;
     ij = (i>j) ? ioff[i] + j : ioff[j] + i;
     overlap[ij] = val;
+    overlap2[i][j] = val;
+    if (i != j)
+      overlap2[j][i] = val;
   }
   fclose(input);
 
   //Read kinetic energy
   double ke[BIGNUM];
+  double ke2[7][7];
   input = fopen("t.dat", "r");
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
     i -= 1;
     j -= 1;
     ij = (i>j) ? ioff[i] + j : ioff[j] + i;
     ke[ij] = val;
+    ke2[i][j] = val;
+    if (i != j)
+      ke2[j][i] = val;
   }
   fclose(input);
   
 
   //Read nuclear-attraction integrals
   double nai[BIGNUM];
+  double nai2[7][7];
   input = fopen("v.dat", "r");
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
     i -= 1;
     j -= 1;
     ij = (i>j) ? ioff[i] + j : ioff[j] + i;
     nai[ij] = val;
+    nai2[i][j] = val;
+    if(i != j)
+      nai2[j][i] = val;
   }
   fclose(input);
 
   //Core Hamiltonia
-  double coreH[BIGNUM];
+  double coreH[7][7];
+  for(int i = 0; i < 7; i++){
+    for(int j = 0; j < 7; j++){
+      coreH[i][j] = ke2[i][j] + nai2[i][j];
+    }
+  }
+  
+ 
   
   
 }
