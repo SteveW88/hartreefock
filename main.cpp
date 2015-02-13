@@ -106,47 +106,12 @@ int main(int argc, char *argv[]) {
  
   ///////////////////////
   //Diagonalize overlap
-  /////////////////////
- 
-  //Upper Triangluar
-  int numRows = 7;
-  for(int i = 0; i < numRows; i++){
-    //determine largest row
-    int largestRow = i;
-    for(int k = i; k < numRows; k++){
-      if(abs(overlap2[k][i]) > abs(overlap2[i][k])){
-        largestRow = k;
-      }
-    }
+  ///////////////////////
+  //Use library for this??
 
-    if(largestRow != i){
-      //rowswap
-      int columns = numRows - i;
-      double temp[1][columns];
-      for(int col = i; col < numRows; col++){
-        temp[0][col] = overlap2[i][col];
-        overlap2[i][col] = overlap2[largestRow][col];
-        overlap2[largestRow][col] = temp[0][col];
-      }
-    }
-    // row reduce
-    if(overlap2[i][i] != 0){
-       
-      for(int j = 1; j < numRows;  j++){
-        double factor = overlap2[i+j][i]/overlap2[i][i];
-        for(int col = i; col < numRows - i; col++){
-          
-          overlap2[i+j][col] -= (overlap2[i][col]*factor);
-        }
-      }
-    }
-  }
+  
 
-    // Determinant = sum of diagonal elements
-  double eigenValues[numRows];
-  for(int i = 0; i < numRows; i++){
-    eigenValues[i] = overlap2[i][i];
-  }
+
 
 }
 

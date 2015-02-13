@@ -1,5 +1,5 @@
 CPP=g++
-FLAGS=
+FLAGS=-g
 
 OUT_EXEC = main
 objects = main.o 
