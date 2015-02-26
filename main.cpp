@@ -166,10 +166,6 @@ int main(int argc, char *argv[]) {
   gsl_vector_complex_free(eval);
   gsl_matrix_complex_free(evec);
   
-  gsl_matrix * m1 = gsl_matrix_alloc(10,3);
-
-  gsl_matrix_free (m1);
-
   R7::Matrix mat = R7::Matrix(coreH2);
   R7::DiagMat As = R7::DiagMat(eigenvalues);
   R7::Matrix Ls = R7::Matrix(eigenvectors).T();
@@ -177,6 +173,55 @@ int main(int argc, char *argv[]) {
   // R7::Matrix Snegsqrt = Ls * As.ToPower(-1/2) * Ls.T();
   //R7::Matrix Snegsqrt = Ls * Ls; //Ls.T();
 
+  double tarray[9] = {1, 1, 0,
+                      0, 2, 0,
+                      0, -1,4};
+
+gsl_matrix_view m1 
+   = gsl_matrix_view_array (tarray, 3, 3);
+
+ gsl_vector_complex *eval1 = gsl_vector_complex_alloc (3);
+ gsl_matrix_complex *evec1 = gsl_matrix_complex_alloc (3, 3);
+
+  gsl_eigen_nonsymmv_workspace * w1 = 
+    gsl_eigen_nonsymmv_alloc (3);
+  
+  gsl_eigen_nonsymmv (&m1.matrix, eval1, evec1, w1);
+ 
+  gsl_eigen_nonsymmv_free (w1);
+
+  gsl_eigen_nonsymmv_sort (eval1, evec1, 
+                           GSL_EIGEN_SORT_ABS_DESC);
+ 
+  {
+    int i, j;
+
+    for (i = 0; i < 3; i++)
+      {
+        gsl_complex eval_i 
+          = gsl_vector_complex_get (eval1, i);
+        gsl_vector_complex_view evec_i 
+          = gsl_matrix_complex_column (evec1, i);
+
+        printf ("eigenvalue = %g \n",
+                GSL_REAL(eval_i));
+        printf ("eigenvector = \n");
+
+        //eigenvalues[i] = GSL_REAL(eval_i);
+        for (j = 0; j < 3; ++j)
+          {
+            gsl_complex z = 
+              gsl_vector_complex_get(&evec_i.vector, j);
+            printf("%g \n", GSL_REAL(z));
+            //eigenvectors[(i*3)+j] = GSL_REAL(z);
+          }
+      }
+  }
+  
+  gsl_vector_complex_free(eval1);
+  gsl_matrix_complex_free(evec1);
+
+  
   return 0;
 
 }
