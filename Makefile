@@ -1,12 +1,12 @@
 CPP=g++
-FLAGS=-g
+FLAGS=-g -lgsl -lm
 
 OUT_EXEC = main
-objects = main.o 
+objects= main.o
 
 ## Headers, and their dependencies:
 ##
-
+matrices_hpp = matrices.hpp
 ## Exectuable:
 ##
 $(OUT_EXEC) : $(objects)
@@ -14,7 +14,7 @@ $(OUT_EXEC) : $(objects)
 
 ## Object Files
 ##
-main.o: main.cpp
+main.o: main.cpp $(matrices_hpp)
 	$(CPP) -c $< $(FLAGS)
 
 ## Cleanup
