@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   //
   FILE *input;
   double val;
-  double overlap[BIGNUM];
+  double overlap[49];
   double overlap2[7][7];
   input = fopen("s.dat", "r");
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
@@ -166,16 +166,20 @@ int main(int argc, char *argv[]) {
   gsl_vector_complex_free(eval);
   gsl_matrix_complex_free(evec);
   
-  R7::Matrix mat = R7::Matrix(coreH2);
-  R7::DiagMat As = R7::DiagMat(eigenvalues);
-  R7::Matrix Ls = R7::Matrix(eigenvectors).T();
-  R7::DiagMat test = As.ToPower(-1/2);
+  R7::Matrix mat = R7::Matrix(coreH2,7);
+  R7::Matrix overlapmat = R7::Matrix(overlap,7);
+  R7::DiagMat As = R7::DiagMat(eigenvalues,7);
+  R7::Matrix Ls = R7::Matrix(eigenvectors,7).T();
+  R7::Matrix test = Ls * As * Ls.T();
   // R7::Matrix Snegsqrt = Ls * As.ToPower(-1/2) * Ls.T();
-  //R7::Matrix Snegsqrt = Ls * Ls; //Ls.T();
+  R7::Matrix Snegsqrt = (Ls * Ls.T());
 
   double tarray[9] = {1, 1, 0,
                       0, 2, 0,
                       0, -1,4};
+
+  double testegval[3];
+  double testegvec[9];
 
 gsl_matrix_view m1 
    = gsl_matrix_view_array (tarray, 3, 3);
@@ -206,14 +210,14 @@ gsl_matrix_view m1
         printf ("eigenvalue = %g \n",
                 GSL_REAL(eval_i));
         printf ("eigenvector = \n");
-
+        testegval[i] =  GSL_REAL(eval_i);
         //eigenvalues[i] = GSL_REAL(eval_i);
         for (j = 0; j < 3; ++j)
           {
             gsl_complex z = 
               gsl_vector_complex_get(&evec_i.vector, j);
             printf("%g \n", GSL_REAL(z));
-            //eigenvectors[(i*3)+j] = GSL_REAL(z);
+            testegvec[(i*3)+j] = GSL_REAL(z);
           }
       }
   }
@@ -221,6 +225,9 @@ gsl_matrix_view m1
   gsl_vector_complex_free(eval1);
   gsl_matrix_complex_free(evec1);
 
+
+  R7::DiagMat testvals = R7::DiagMat(testegval,3);
+  R7::Matrix testvec = R7::Matrix(testegvec,3).T();
   
   return 0;
 
