@@ -9,108 +9,115 @@ namespace R7{
 
 class Matrix {
 protected:
-  int dim;
-  double **mX;// = new int*[dim];
-  
+  int mDim;
+  std::vector<std::vector<double> > mY;
+
 public:
 
-  Matrix(std::vector<double> elements, int size) : dim(size){
-    mX = new double*[dim];
-    for(int l = 0; l < dim; l++)
-      mX[l] = new double[dim];
-    for (int i = 0; i < dim; i++){
-      for(int j = 0; j < dim; j++)
-        {
-          mX[i][j] = elements.at((i*dim)+j);
-        }
+  Matrix(double elements[], int size) : mDim(size){
+    mY.resize(mDim);
+    for(int i=0; i < mY.size(); i++){
+      mY[i].resize(mDim);
     }
-         
-  }
-  Matrix(double elements[], int size) : dim(size){
-    mX = new double*[dim];
-    for(int l = 0; l < dim; l++)
-      mX[l] = new double[dim];
-    for (int i = 0; i < dim; i++){
-      for(int j = 0; j < dim; j++)
-        {
-          mX[i][j] = elements[(i*dim)+j];
-        }
-    }
-  }
-  Matrix(int size) : dim(size){
-    mX = new double*[dim];
-    for(int l = 0; l < dim; l++)
-      mX[l] = new double[dim];
-    for (int i = 0; i < dim; i++){
-      for(int j = 0; j < dim; j++)
-        {
-          mX[i][j] = 0;
-        }
-    }
-  }
-public:
-
-  double X(int row, int col){return mX[row][col];}
-  double setX(int row, int col, double val){mX[row][col] = val;}
-
-  void out(){
-    for (int i = 0; i < dim; i++){
-      for(int j = 0; j < dim; j++)
-        {
-          printf("%f", **(mX[i][j]);
-        }
-  }
-  }
-
-  Matrix T() { 
-    Matrix temp = Matrix((*this).dim);
-    for(int i = 0; i < dim; i++){
-      for(int j = 0; j < dim; j++){
-        temp.setX(i,j,(*this).mX[j][i]);
+    for(int i=0; i < mDim; i++){
+      for(int j=0; j < mDim; j++){
+        mY[i][j] = elements[(i*mDim)+j];
       }
     }
-    return temp;} 
+  }
+  Matrix(int size) : mDim(size){
+   mY.resize(mDim);
+    for(int i=0; i < mY.size(); i++){
+      mY[i].resize(mDim);
+    }
+    for(int i=0; i < mDim; i++){
+      for(int j=0; j < mDim; j++){
+        mY[i][j] = 0;
+      }
+    }
+  }
 
-  Matrix & operator*=(const Matrix & rhs){
-    Matrix temp = Matrix((*this).dim);
+public:
+
+  double & operator()(const int & row, const int & col){
+    return this->mY[row][col];
+  }
+  const double & operator()(const int & row, const int & col) const{
+    return this->mY[row][col];
+  }
+  double setX(int row, int col, double val){mY[row][col] = val;}
+  int getDim() const{return this->mDim;}
+ 
+
+  Matrix & operator=(const Matrix & rhs){
+    if (&rhs == this)
+      return *this;
+    mDim = rhs.getDim();
+
+    mY.resize(mDim);
+    for(int i=0; i < mY.size(); i++){
+      mY[i].resize(mDim);
+    }
+    
+    for (int i = 0; i < mDim; i++){
+      for(int j = 0; j < mDim; j++){
+        mY[i][j] = rhs(i,j);
+      }
+    }
+    return *this;
+  }
+  
+  Matrix operator*(const Matrix & rhs){
+    Matrix temp = Matrix((*this).mDim);
     double num;
-    for(int i = 0; i < dim; i++){
-      for(int k = 0; k < dim; k++){
+     for(int i = 0; i < mDim; i++){
+      for(int k = 0; k < mDim; k++){
         num = 0;
-        for(int j = 0; j < dim; j++){
-          num += (mX[i][j] * rhs.mX[j][k]);
+        for(int j = 0; j < mDim; j++){
+          num += (this->mY[i][j] * rhs.mY[j][k]);
         }
         temp.setX(i,k,num);
       }
-    }
-    return temp;
+     }
+     return temp;
+
   }
 
-  //Matrix operator*(Matrix lhs, const Matrix & rhs){
-  //  return lhs *= rhs;
-  //}
+  Matrix & operator*=(const Matrix & rhs){
+    Matrix temp = (*this)*rhs;
+    (*this) = temp;
+    return *this;
+  }
 
+  Matrix T() { 
+    Matrix temp = Matrix((*this).mDim);
+    for(int i = 0; i < mDim; i++){
+      for(int j = 0; j < mDim; j++){
+        temp.setX(i,j,(*this).mY[j][i]);
+      }
+    }
+    return temp;
+} 
+         
+    
 };
 
-inline Matrix operator*(Matrix lhs, const Matrix & rhs){
-  return lhs *= rhs;
-}
   
 class DiagMat : public Matrix {
 
 public:
   
   DiagMat(double elements[], int size) : Matrix(size) {
-    for (int i = 0; i < dim; i++){
+    for (int i = 0; i < mDim; i++){
       setX(i,i,elements[i]);
     }
   }
   DiagMat(int size) : Matrix(size){}
 
   DiagMat ToPower(double pwr){
-    DiagMat temp = DiagMat((*this).dim);
-    for(int i = 0; i < dim; i++){
-      temp.setX(i,i,pow((*this).X(i,i),pwr));
+    DiagMat temp = DiagMat((*this).mDim);
+    for(int i = 0; i < mDim; i++){
+      temp.setX(i,i,pow((*this).mY[i][i],pwr));
     }
     return temp;
   }

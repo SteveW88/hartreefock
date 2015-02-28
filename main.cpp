@@ -7,7 +7,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include "matrices.hpp"
-using namespace std;
+//using namespace std;
 
 
 int main(int argc, char *argv[]) {
@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
 
   //Step #1: Read enuc
   //
-  ifstream enucFile;
-  enucFile.open("enuc.dat",ifstream::in);
+  std::ifstream enucFile;
+  enucFile.open("enuc.dat",std::ifstream::in);
   double enuc;
   enucFile >> enuc;
   enucFile.close();
@@ -44,8 +44,12 @@ int main(int argc, char *argv[]) {
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
     i -= 1;
     j -= 1;
-    ij = (i>j) ? ioff[i] + j : ioff[j] + i;
-    overlap[ij] = val;
+    // ij = (i>j) ? ioff[i] + j : ioff[j] + i;
+    //overlap[ij] = val;
+    overlap[(i*7)+j ] = val;
+    if(i != j)
+      overlap[(j*7)+i ] = val;
+
     overlap2[i][j] = val;
     if (i != j)
       overlap2[j][i] = val;
@@ -169,10 +173,17 @@ int main(int argc, char *argv[]) {
   R7::Matrix mat = R7::Matrix(coreH2,7);
   R7::Matrix overlapmat = R7::Matrix(overlap,7);
   R7::DiagMat As = R7::DiagMat(eigenvalues,7);
+  R7::Matrix LsT = R7::Matrix(eigenvectors,7);
   R7::Matrix Ls = R7::Matrix(eigenvectors,7).T();
-  R7::Matrix test = Ls * As * Ls.T();
+
+  R7::Matrix step1 = Ls*As;
+  R7::Matrix LsTran = Ls.T();
+  R7::Matrix step2 = step1 * LsTran;
+  R7::Matrix Aspow = As.ToPower(2);
+
+  // R7::Matrix test = ((Ls * As) * Ls.T());
   // R7::Matrix Snegsqrt = Ls * As.ToPower(-1/2) * Ls.T();
-  R7::Matrix Snegsqrt = (Ls * Ls.T());
+  // R7::Matrix Snegsqrt = (Ls * Ls.T());
 
   double tarray[9] = {1, 1, 0,
                       0, 2, 0,
@@ -225,7 +236,7 @@ gsl_matrix_view m1
   gsl_vector_complex_free(eval1);
   gsl_matrix_complex_free(evec1);
 
-
+  R7::Matrix testvec1 = R7::Matrix(testegvec,3);
   R7::DiagMat testvals = R7::DiagMat(testegval,3);
   R7::Matrix testvec = R7::Matrix(testegvec,3).T();
   
