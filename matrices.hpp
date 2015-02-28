@@ -5,8 +5,6 @@
 // use vector size to determine matrix size
 
 
-namespace R7{
-
 class Matrix {
 protected:
   int mDim;
@@ -25,6 +23,7 @@ public:
       }
     }
   }
+  
   Matrix(int size) : mDim(size){
    mY.resize(mDim);
     for(int i=0; i < mY.size(); i++){
@@ -48,6 +47,15 @@ public:
   double setX(int row, int col, double val){mY[row][col] = val;}
   int getDim() const{return this->mDim;}
  
+  double * ToArraySTATIC(){
+   static double array[49];
+    for(int i=0; i < mDim; i++){
+      for(int j=0; j < mDim; j++){
+        array[(i*mDim)+j] = this->mY[i][j];
+      }
+    }
+    return array;
+  }
 
   Matrix & operator=(const Matrix & rhs){
     if (&rhs == this)
@@ -124,4 +132,4 @@ public:
 
 };
 
-}               
+      

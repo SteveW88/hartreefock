@@ -7,7 +7,55 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include "matrices.hpp"
-//using namespace std;
+
+
+
+void Diagonalize(double eigenval[], double eigenvec[], double origMat[]){
+
+  gsl_matrix_view m 
+    = gsl_matrix_view_array (origMat, 7, 7);
+
+  gsl_vector_complex *eval = gsl_vector_complex_alloc (7);
+  gsl_matrix_complex *evec = gsl_matrix_complex_alloc (7, 7);
+  
+  gsl_eigen_nonsymmv_workspace * w = 
+    gsl_eigen_nonsymmv_alloc (7);
+  
+  gsl_eigen_nonsymmv (&m.matrix, eval, evec, w);
+  
+  gsl_eigen_nonsymmv_free (w);
+  
+  gsl_eigen_nonsymmv_sort (eval, evec, 
+                           GSL_EIGEN_SORT_ABS_DESC);
+  
+  {
+    int i, j;
+    
+    for (i = 0; i < 7; i++)
+      {
+        gsl_complex eval_i 
+          = gsl_vector_complex_get (eval, i);
+        gsl_vector_complex_view evec_i 
+          = gsl_matrix_complex_column (evec, i);
+                     
+        // printf ("eigenvalue = %g \n",
+        //GSL_REAL(eval_i));
+    //  printf ("eigenvector = \n");   
+        eigenval[i] = GSL_REAL(eval_i);
+        
+        for (j = 0; j < 7; ++j)
+          {
+            gsl_complex z = 
+              gsl_vector_complex_get(&evec_i.vector, j);
+            // printf("%g \n", GSL_REAL(z));
+            eigenvec[(i*7)+j] = GSL_REAL(z);
+          }
+      }
+  }
+  
+  gsl_vector_complex_free(eval);
+  gsl_matrix_complex_free(evec);
+}
 
 
 int main(int argc, char *argv[]) {
@@ -21,6 +69,7 @@ int main(int argc, char *argv[]) {
 
 
   int i, j, k, l, ij, kl, ijkl;
+  int ji;
   // Row/Column to one dimensional array indexing transformation
   // ij = (i>j) ? ioff[i] + j : ioff[j] + i;
   // ijkl = (ij > kl) ? ioff[ij] + kl : ioff[kl] + ij; //TODO: Verify
@@ -44,11 +93,10 @@ int main(int argc, char *argv[]) {
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
     i -= 1;
     j -= 1;
-    // ij = (i>j) ? ioff[i] + j : ioff[j] + i;
-    //overlap[ij] = val;
-    overlap[(i*7)+j ] = val;
+    overlap[(i*7)+j] = val;
     if(i != j)
-      overlap[(j*7)+i ] = val;
+      overlap[(j*7)+i] = val;
+    
 
     overlap2[i][j] = val;
     if (i != j)
@@ -58,7 +106,7 @@ int main(int argc, char *argv[]) {
 
   //Read kinetic energy
   //
-  double ke[BIGNUM];
+  double ke[33];
   double ke2[7][7];
   input = fopen("t.dat", "r");
   while(fscanf(input, "%d %d %lf", &i, &j, &val) != EOF){
@@ -125,121 +173,35 @@ int main(int argc, char *argv[]) {
   
   double eigenvalues[7];
   double eigenvectors[49];
-  
- gsl_matrix_view m 
-   = gsl_matrix_view_array (coreH2, 7, 7);
-
- gsl_vector_complex *eval = gsl_vector_complex_alloc (7);
- gsl_matrix_complex *evec = gsl_matrix_complex_alloc (7, 7);
-
-  gsl_eigen_nonsymmv_workspace * w = 
-    gsl_eigen_nonsymmv_alloc (7);
-  
-  gsl_eigen_nonsymmv (&m.matrix, eval, evec, w);
-
-  gsl_eigen_nonsymmv_free (w);
-
-  gsl_eigen_nonsymmv_sort (eval, evec, 
-                           GSL_EIGEN_SORT_ABS_DESC);
-  
-  {
-    int i, j;
-
-    for (i = 0; i < 7; i++)
-      {
-        gsl_complex eval_i 
-          = gsl_vector_complex_get (eval, i);
-        gsl_vector_complex_view evec_i 
-          = gsl_matrix_complex_column (evec, i);
-
-        printf ("eigenvalue = %g \n",
-                GSL_REAL(eval_i));
-        printf ("eigenvector = \n");
-
-        eigenvalues[i] = GSL_REAL(eval_i);
-        for (j = 0; j < 7; ++j)
-          {
-            gsl_complex z = 
-              gsl_vector_complex_get(&evec_i.vector, j);
-            printf("%g \n", GSL_REAL(z));
-            eigenvectors[(i*7)+j] = GSL_REAL(z);
-          }
-      }
-  }
-  
-  gsl_vector_complex_free(eval);
-  gsl_matrix_complex_free(evec);
-  
-  R7::Matrix mat = R7::Matrix(coreH2,7);
-  R7::Matrix overlapmat = R7::Matrix(overlap,7);
-  R7::DiagMat As = R7::DiagMat(eigenvalues,7);
-  R7::Matrix LsT = R7::Matrix(eigenvectors,7);
-  R7::Matrix Ls = R7::Matrix(eigenvectors,7).T();
-
-  R7::Matrix step1 = Ls*As;
-  R7::Matrix LsTran = Ls.T();
-  R7::Matrix step2 = step1 * LsTran;
-  R7::Matrix Aspow = As.ToPower(2);
-
-  // R7::Matrix test = ((Ls * As) * Ls.T());
-  // R7::Matrix Snegsqrt = Ls * As.ToPower(-1/2) * Ls.T();
-  // R7::Matrix Snegsqrt = (Ls * Ls.T());
-
-  double tarray[9] = {1, 1, 0,
-                      0, 2, 0,
-                      0, -1,4};
-
-  double testegval[3];
-  double testegvec[9];
-
-gsl_matrix_view m1 
-   = gsl_matrix_view_array (tarray, 3, 3);
-
- gsl_vector_complex *eval1 = gsl_vector_complex_alloc (3);
- gsl_matrix_complex *evec1 = gsl_matrix_complex_alloc (3, 3);
-
-  gsl_eigen_nonsymmv_workspace * w1 = 
-    gsl_eigen_nonsymmv_alloc (3);
-  
-  gsl_eigen_nonsymmv (&m1.matrix, eval1, evec1, w1);
  
-  gsl_eigen_nonsymmv_free (w1);
-
-  gsl_eigen_nonsymmv_sort (eval1, evec1, 
-                           GSL_EIGEN_SORT_ABS_DESC);
+  Diagonalize(eigenvalues,eigenvectors,overlap);
+  Matrix Hcore = Matrix(coreH2,7);
+  DiagMat As = DiagMat(eigenvalues,7);
+  Matrix Ls = Matrix(eigenvectors,7).T();
  
-  {
-    int i, j;
+ 
+  Matrix Sso = (Ls*As.ToPower(-0.5)*Ls.T());
 
-    for (i = 0; i < 3; i++)
-      {
-        gsl_complex eval_i 
-          = gsl_vector_complex_get (eval1, i);
-        gsl_vector_complex_view evec_i 
-          = gsl_matrix_complex_column (evec1, i);
+  //Step #5
+  //
+  Matrix Fockinit = (Sso.T() * Hcore * Sso); 
 
-        printf ("eigenvalue = %g \n",
-                GSL_REAL(eval_i));
-        printf ("eigenvector = \n");
-        testegval[i] =  GSL_REAL(eval_i);
-        //eigenvalues[i] = GSL_REAL(eval_i);
-        for (j = 0; j < 3; ++j)
-          {
-            gsl_complex z = 
-              gsl_vector_complex_get(&evec_i.vector, j);
-            printf("%g \n", GSL_REAL(z));
-            testegvec[(i*3)+j] = GSL_REAL(z);
-          }
-      }
+  double * Fockinitarray = Fockinit.ToArraySTATIC();
+  double Farray[49];
+  for(int i=0; i < 49; i++){
+    Farray[i] = *(Fockinitarray+i);
   }
-  
-  gsl_vector_complex_free(eval1);
-  gsl_matrix_complex_free(evec1);
+  Diagonalize(eigenvalues,eigenvectors,Farray);
 
-  R7::Matrix testvec1 = R7::Matrix(testegvec,3);
-  R7::DiagMat testvals = R7::DiagMat(testegval,3);
-  R7::Matrix testvec = R7::Matrix(testegvec,3).T();
-  
+  Matrix C0prime = Matrix(eigenvectors,7).T();
+  DiagMat eps0 = DiagMat(eigenvalues,7);
+  Matrix C0 = (Sso * C0prime);
+
+  // C0 values match in value, not in sign
+
+  // build density matrix
+
   return 0;
 
 }
+
