@@ -10,7 +10,7 @@
 
 
 
-void Diagonalize(double eigenval[], double eigenvec[], double origMat[]){
+void Diagonalize(double eigenval[], double eigenvec[], double origMat[]){  //Set for 7X7 matrices
 
   gsl_matrix_view m 
     = gsl_matrix_view_array (origMat, 7, 7);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     ioff[i] = ioff[i-1] + i;
 
 
-  int i, j, k, l, ij, kl, ijkl;
+  int i, j, k, l, ij, kl, ijkl, ik, jl, ikjl;
   int ji;
   // Row/Column to one dimensional array indexing transformation
   // ij = (i>j) ? ioff[i] + j : ioff[j] + i;
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
   double eigenvectors[49];
  
   Diagonalize(eigenvalues,eigenvectors,overlap);
-  Matrix Hcore = Matrix(coreH2,7);
+  Matrix Hcore = Matrix(coreH2,7);  // Correct
   DiagMat As = DiagMat(eigenvalues,7);
   Matrix Ls = Matrix(eigenvectors,7).T();
   Matrix LsT = Ls.T();
@@ -205,8 +205,8 @@ int main(int argc, char *argv[]) {
   Matrix DensInit = Matrix(7);
   for(int k=0; k < 7; k++){
     for(int j=0; j < 7; j++){
-      for(int i=0; i <4; i++){ // Set to 4 works (Not sure why)
-        DensInit(k,j) += C0(k,i) * C0(j,i);    
+      for(int i=0; i <4; i++){ // Set to 4 works (sum from 0 to N/2)
+        DensInit(k,j) += C0(k,i) * C0(j,i);   // Correct
       }
     }
   }
@@ -219,21 +219,45 @@ int main(int argc, char *argv[]) {
       Eelec +=  DensInit(i,j) * (Hcore(i,j) + Fockinit(i,j));
     }
   }
-
-  double Etot = Eelec + enuc;  //incorret
  
-
+  double Etot = Eelec + enuc;  //incorret
+  double Etotprev;
+  
 
   // Step 7: Compute New Fock Matrix
   //
-
-  Matrix newFock;
+  do{
+    Etotprev = Etot;
+#define INDEX(i,j) (i>j) ? (ioff[i]+j) : (ioff[j]+i);
+  double F[7][7];
+  for(int i=0; i < 7; i++)
+    for(int j=0; j < 7; j++) {
+      F[i][j] = coreH[i][j];
+      for(int k=0; k < 7; k++)
+        for(int l=0; l < 7; l++) {
+          ij = INDEX(i,j);
+          kl = INDEX(k,l);
+          ijkl = INDEX(ij,kl);
+          ik = INDEX(i,k);
+          jl = INDEX(j,l);
+          ikjl = INDEX(ik,jl);
+ 
+          F[i][j] += DensInit(k,l) * (2.0 * tei[ijkl] - tei[ikjl]);
+        }
+    }
+  double F1[49];
+  for(int i=0; i < 7; i++){
+    for(int j=0; j<7; j++){
+      F1[(i*7)+j] = F[i][j];
+    }
+  }
+  Matrix newFock = Matrix(F1,7);
   // Step 8: Build New Density Matrix
   //
-  Matrix newFockinit = (Sso.T() * newFock * Sso); // Correct
+  Matrix newFockinit = (Sso.T() * newFock * Sso); 
 
   double * newFockinitarray = newFockinit.ToArraySTATIC();
-  double newFarray[49];                        // Correct
+  double newFarray[49];                       
   for(int i=0; i < 49; i++){
     newFarray[i] = *(newFockinitarray+i);
   }
@@ -241,13 +265,13 @@ int main(int argc, char *argv[]) {
      
   Matrix newC0prime = Matrix(eigenvectors,7).T();
   DiagMat neweps0 = DiagMat(eigenvalues,7);
-  Matrix newC0 = (Sso * C0prime);  // C0 values match in value, not in sign
+  Matrix newC0 = (Sso * C0prime);  
 
   // build density matrix
   Matrix newDensInit = Matrix(7);
   for(int k=0; k < 7; k++){
     for(int j=0; j < 7; j++){
-      for(int i=0; i <4; i++){ // Set to 4 works (Not sure why)
+      for(int i=0; i <4; i++){ 
         newDensInit(k,j) += newC0(k,i) * newC0(j,i);    
       }
     }
@@ -256,10 +280,17 @@ int main(int argc, char *argv[]) {
 
   // Step 9: Compute New SCF Energy
   //
+  double Eelec1 = 0;
+  for(int i=0; i<7; i++){
+    for(int j=0; j<7; j++){
+      Eelec1 +=  newDensInit(i,j) * (Hcore(i,j) + newFockinit(i,j));
+    }
+  }
+  
+  Etot = Eelec1 + enuc;  //incorret
+ 
+  }while(fabs(Etot - Etotprev)> 1e-6);  // Step 10: Test for Convergence
 
-
-  // Step 10: Test for Convergence
-  //
 
 
 
