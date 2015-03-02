@@ -44,16 +44,16 @@ public:
   const double & operator()(const int & row, const int & col) const{
     return this->mY[row][col];
   }
-  double setX(int row, int col, double val){mY[row][col] = val;}
+
   int getDim() const{return this->mDim;}
  
   double * ToArraySTATIC(){
-   static double array[49];
-    for(int i=0; i < mDim; i++){
-      for(int j=0; j < mDim; j++){
-        array[(i*mDim)+j] = this->mY[i][j];
+    static double array[49];
+      for(int i=0; i < mDim; i++){
+        for(int j=0; j < mDim; j++){
+          array[(i*mDim)+j] = this->mY[i][j];
+        }
       }
-    }
     return array;
   }
 
@@ -77,14 +77,14 @@ public:
   
   Matrix operator*(const Matrix & rhs){
     Matrix temp = Matrix((*this).mDim);
-    double num;
+    // double num;
      for(int i = 0; i < mDim; i++){
       for(int k = 0; k < mDim; k++){
-        num = 0;
+        //  num = 0;
         for(int j = 0; j < mDim; j++){
-          num += (this->mY[i][j] * rhs.mY[j][k]);
+          temp(i,k) += (this->mY[i][j] * rhs.mY[j][k]);
         }
-        temp.setX(i,k,num);
+        //    temp.setX(i,k,num);
       }
      }
      return temp;
@@ -101,7 +101,7 @@ public:
     Matrix temp = Matrix((*this).mDim);
     for(int i = 0; i < mDim; i++){
       for(int j = 0; j < mDim; j++){
-        temp.setX(i,j,(*this).mY[j][i]);
+        temp(i,j) = this->mY[j][i];
       }
     }
     return temp;
@@ -117,7 +117,7 @@ public:
   
   DiagMat(double elements[], int size) : Matrix(size) {
     for (int i = 0; i < mDim; i++){
-      setX(i,i,elements[i]);
+      mY[i][i] = elements[i];
     }
   }
   DiagMat(int size) : Matrix(size){}
@@ -125,7 +125,7 @@ public:
   DiagMat ToPower(double pwr){
     DiagMat temp = DiagMat((*this).mDim);
     for(int i = 0; i < mDim; i++){
-      temp.setX(i,i,pow((*this).mY[i][i],pwr));
+      temp(i,i) = pow(this->mY[i][i],pwr);
     }
     return temp;
   }

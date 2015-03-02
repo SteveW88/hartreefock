@@ -38,16 +38,16 @@ void Diagonalize(double eigenval[], double eigenvec[], double origMat[]){
         gsl_vector_complex_view evec_i 
           = gsl_matrix_complex_column (evec, i);
                      
-        // printf ("eigenvalue = %g \n",
-        //GSL_REAL(eval_i));
-    //  printf ("eigenvector = \n");   
+         printf ("eigenvalue = %g \n",
+                 GSL_REAL(eval_i));
+         printf ("eigenvector = \n");   
         eigenval[i] = GSL_REAL(eval_i);
         
         for (j = 0; j < 7; ++j)
           {
             gsl_complex z = 
               gsl_vector_complex_get(&evec_i.vector, j);
-            // printf("%g \n", GSL_REAL(z));
+            printf("%g \n", GSL_REAL(z));
             eigenvec[(i*7)+j] = GSL_REAL(z);
           }
       }
@@ -178,30 +178,92 @@ int main(int argc, char *argv[]) {
   Matrix Hcore = Matrix(coreH2,7);
   DiagMat As = DiagMat(eigenvalues,7);
   Matrix Ls = Matrix(eigenvectors,7).T();
- 
- 
-  Matrix Sso = (Ls*As.ToPower(-0.5)*Ls.T());
+  Matrix LsT = Ls.T();
+  Matrix Sso = ((Ls*As.ToPower(-0.5))*Ls.T()); // Correct
+  
 
   //Step #5
   //
-  Matrix Fockinit = (Sso.T() * Hcore * Sso); 
+  Matrix Fockinit = (Sso.T() * Hcore * Sso); // Correct
 
   double * Fockinitarray = Fockinit.ToArraySTATIC();
-  double Farray[49];
+  double Farray[49];                        // Correct
   for(int i=0; i < 49; i++){
     Farray[i] = *(Fockinitarray+i);
   }
   Diagonalize(eigenvalues,eigenvectors,Farray);
 
+
+
   Matrix C0prime = Matrix(eigenvectors,7).T();
   DiagMat eps0 = DiagMat(eigenvalues,7);
-  Matrix C0 = (Sso * C0prime);
+  Matrix C0 = (Sso * C0prime);  // C0 values match in value, not in sign
 
-  // C0 values match in value, not in sign
+
 
   // build density matrix
+  Matrix DensInit = Matrix(7);
+  for(int k=0; k < 7; k++){
+    for(int j=0; j < 7; j++){
+      for(int i=0; i <4; i++){ // Set to 4 works (Not sure why)
+        DensInit(k,j) += C0(k,i) * C0(j,i);    
+      }
+    }
+  }
 
-  return 0;
+  // Step 6: Compute Initial SCF Energy
+  //
+  double Eelec = 0;
+  for(int i=0; i<7; i++){
+    for(int j=0; j<7; j++){
+      Eelec +=  DensInit(i,j) * (Hcore(i,j) + Fockinit(i,j));
+    }
+  }
+
+  double Etot = Eelec + enuc;  //incorret
+ 
+
+
+  // Step 7: Compute New Fock Matrix
+  //
+
+  Matrix newFock;
+  // Step 8: Build New Density Matrix
+  //
+  Matrix newFockinit = (Sso.T() * newFock * Sso); // Correct
+
+  double * newFockinitarray = newFockinit.ToArraySTATIC();
+  double newFarray[49];                        // Correct
+  for(int i=0; i < 49; i++){
+    newFarray[i] = *(newFockinitarray+i);
+  }
+  Diagonalize(eigenvalues,eigenvectors,newFarray);
+     
+  Matrix newC0prime = Matrix(eigenvectors,7).T();
+  DiagMat neweps0 = DiagMat(eigenvalues,7);
+  Matrix newC0 = (Sso * C0prime);  // C0 values match in value, not in sign
+
+  // build density matrix
+  Matrix newDensInit = Matrix(7);
+  for(int k=0; k < 7; k++){
+    for(int j=0; j < 7; j++){
+      for(int i=0; i <4; i++){ // Set to 4 works (Not sure why)
+        newDensInit(k,j) += newC0(k,i) * newC0(j,i);    
+      }
+    }
+  }
+
+
+  // Step 9: Compute New SCF Energy
+  //
+
+
+  // Step 10: Test for Convergence
+  //
+
+
+
+ return 0;
 
 }
 
