@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <fstream>
 #include <cmath>
-#include <vector>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include "matrices.hpp"
@@ -37,17 +36,14 @@ void Diagonalize(double eigenval[], double eigenvec[], double origMat[]){  //Set
           = gsl_vector_complex_get (eval, i);
         gsl_vector_complex_view evec_i 
           = gsl_matrix_complex_column (evec, i);
-                     
-         printf ("eigenvalue = %g \n",
-                 GSL_REAL(eval_i));
-         printf ("eigenvector = \n");   
+          
         eigenval[i] = GSL_REAL(eval_i);
         
         for (j = 0; j < 7; ++j)
           {
             gsl_complex z = 
               gsl_vector_complex_get(&evec_i.vector, j);
-            printf("%g \n", GSL_REAL(z));
+           
             eigenvec[(i*7)+j] = GSL_REAL(z);
           }
       }
@@ -292,7 +288,7 @@ int main(int argc, char *argv[]) {
   }while(fabs(Etot - Etotprev)> 1e-6);  // Step 10: Test for Convergence
 
 
-
+  printf("Energy Value: %f \n", Etot);
 
  return 0;
 
