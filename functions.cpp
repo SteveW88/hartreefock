@@ -7,16 +7,12 @@
 #include <gsl/gsl_eigen.h>
 #include "matrices.hpp"
 
-#define BIGNUM 10000
+
+void Diagonalize(double *, double *, Matrix );
 
 //////////////////////
 /// Array Indexing ///
 //////////////////////
-
-int ioff[BIGNUM]
-ioff[0] = 0;
-for(int i=1; i < BIGNUM; i++)
-  ioff[i] = ioff[i-1] + i;
 
 int INDEX(int i,int j){
   return (i>j) ? (ioff[i]+j) : (ioff[j]+i);
@@ -26,7 +22,7 @@ int INDEX(int i,int j){
 /// Read in Files ///
 /////////////////////
 
-double ReadIN(str filename){
+double ReadIN(const char * filename){
   double val;
   std::ifstream File;
   File.open(filename,std::ifstream::in);
@@ -36,12 +32,12 @@ double ReadIN(str filename){
   
 }
 
-void ReadIN(str filename, double out[]){
+void ReadIN(const char * filename, double out[]){
   FILE *input;
-  double i, j, val;
-  double dim = out.size();
+  int i, j, k, l, ij, kl, ijkl;
+  double val;
   input = fopen(filename,"r");
-  while(fscanf(input,"%d %d %d %d %1f", &i,&j,&k,&l&val) != EOF){
+  while(fscanf(input,"%d %d %d %d %1f", &i,&j,&k,&l,&val) != EOF){
     i -= 1;
     j -= 1;
     k -= 1;
@@ -56,7 +52,7 @@ void ReadIN(str filename, double out[]){
   
 }
 
-void ReadIN(str filename, Matrix & out){
+void ReadIN(const char * filename, Matrix & out){
   FILE *input;
   double i, j, val;
   double dim = out.getDim();
@@ -78,6 +74,7 @@ void ReadIN(str filename, Matrix & out){
 
 Matrix BuildFock(Matrix coreH, Matrix DensPrev, double tei[]){
   Matrix Fock = coreH;
+  int dim = coreH.getDim();
   int ij, kl, ik, jl, ijkl, ikjl;
   for(int i=0; i < dim; i++){
     for(int j=0; j < dim; j++){
@@ -134,7 +131,7 @@ Matrix BuildDensity(Matrix C0){
   double dim = C0.getDim();
   Matrix Density = Matrix(dim);
   for(int k=0; k < dim; k++){
-    for(int j=0; j < dim; j++}{
+    for(int j=0; j < dim; j++){
       for(int i=0; i < ((dim+1)*0.5); i++){
         Density(k,j) += C0(k,i) * C0(j,i);
       }
@@ -167,14 +164,14 @@ double ComputeSCF(Matrix Density, Matrix coreH, Matrix Fock){
 
 void Diagonlize(double eigenval[], double eigenvec[], Matrix origMat){
   int dim = origMat.getDim();
-  double * temparray = origMat.ToArray();
+  double * temparray = origMat.ToArraySTATIC();
   double array[dim*dim];
   for(int i=0; i < (dim*dim); i++){
     array[i] = *(temparray+i);
   }
 
   gsl_matrix_view m
-    = gsl_matrix_view_array (origMat, dim, dim);
+    = gsl_matrix_view_array (array, dim, dim);
 
   gsl_vector_complex *eval = gsl_vector_complex_alloc (dim);
   gsl_matrix_complex *evec = gsl_matrix_complex_alloc (dim, dim);

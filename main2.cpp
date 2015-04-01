@@ -1,11 +1,17 @@
-#include "functions.hpp"
+#include "functions.cpp"
 
+#define BIGNUM 10000
 #define dim 7
 
 
-
 int main(int argc, char *argv[]){
+  
+  int ioff[BIGNUM];
+  ioff[0] = 0;
+  for(int i=1; i < BIGNUM; i++)
+    ioff[i] = ioff[i-1] + i;
 
+  
   double enuc = ReadIN("enuc.dat");
   Matrix overlap = Matrix(dim);
   Matrix ke = Matrix(dim);
@@ -34,7 +40,7 @@ int main(int argc, char *argv[]){
 
   Matrix Dens = Matrix(dim);
 
-  double Etot, Eprev;
+  double Eelec, Etot, Eprev;
 
   do{
     Eprev = Etot;
