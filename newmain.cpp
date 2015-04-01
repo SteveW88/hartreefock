@@ -41,28 +41,32 @@ void ReadIN(str filename, double out[]){
   double i, j, val;
   double dim = out.size();
   input = fopen(filename,"r");
-  while(fscanf(input,"%d %d %1f", &i,&j,&val) != EOF){
+  while(fscanf(input,"%d %d %d %d %1f", &i,&j,&k,&l&val) != EOF){
     i -= 1;
     j -= 1;
-    out[(i*dim)+j] = val;
-    if(i != j)
-      out[(j*dim)+i] = val;
+    k -= 1;
+    l -= 1;
+    ij = INDEX(i,j);
+    kl = INDEX(k,l);
+    ijkl = INDEX(ij,kl);
+    
+    out[ijkl] = val;
   }
   fclose(input);
   
 }
 
-void ReadIN(str filename, double out[][]){
+void ReadIN(str filename, Matrix & out){
   FILE *input;
   double i, j, val;
-  double dim = out.size();
+  double dim = out.getDim();
   input = fopen(filename,"r");
   while(fscanf(input,"%d %d %1f", &i,&j,&val) != EOF){
     i -= 1;
     j -= 1;
-    out[i][j] = val;
+    out(i,j) = val;
     if(i != j)
-      out[j][i] = val;
+      out(j,i) = val;
   }
   fclose(input);
   
@@ -72,8 +76,8 @@ void ReadIN(str filename, double out[][]){
 /// Build Fock  ///
 ///////////////////
 
-Matrix BuildFock(Matrix Hcore, Matrix DensPrev, double tei[]){
-  Matrix Fock = Hcore;
+Matrix BuildFock(Matrix coreH, Matrix DensPrev, double tei[]){
+  Matrix Fock = coreH;
   int ij, kl, ik, jl, ijkl, ikjl;
   for(int i=0; i < dim; i++){
     for(int j=0; j < dim; j++){
@@ -94,13 +98,30 @@ Matrix BuildFock(Matrix Hcore, Matrix DensPrev, double tei[]){
   return Fock;
 }
 
+
+/////////////////
+/// Build Sso ///
+/////////////////
+
+Matrix BuildSso(double eigenval[], double eigenvec[], Matrix coreH){
+  double dim = coreH.getDim();
+  DiagMat As = DiagMat(eigenval,dim);
+  Matrix Ls = Matrix(eigenvec,dim).T();
+  return (Ls * As.ToPower(-0.5) * Ls.T());
+
+}
+
 ////////////////
 /// Build C0 ///
 ////////////////
 
-Matrix C0(double eigenvec[], Matrix Sso){
-  Matrix coprime = Matrix(eigenvec,Sso.getDim()).T();
-  return (Sso*coprime);
+Matrix BuildC0(double eigenval[], double eigenvec[], Matrix Sso, Matrix Fock){
+  int dim = Fock.getDim();
+  Matrix Fprime = (Sso.T() * Fock * Sso);
+  Diagonalize(eigenval,eigenvec,Fprime);
+  Matrix C0prime = Matrix(eigenvec,dim);
+  
+  return (Sso * C0prime);
 
 }
 
@@ -123,7 +144,23 @@ Matrix BuildDensity(Matrix C0){
   
   
 }
+
+
+///////////////////
+/// Compute SCF ///
+///////////////////
   
+double ComputeSCF(Matrix Density, Matrix coreH, Matrix Fock){
+  int dim = coreH.getDim();
+  double Eelec = 0;
+  for(int i=0; i < dim; i++){
+    for(int j=0; j < dim; j++){
+      Eelec += Density(i,j) * (coreH(i,j) + Fock(i,j));
+    }
+  }
+  return Eelec;
+}
+
 ///////////////////
 /// Diagonalize ///
 ///////////////////
