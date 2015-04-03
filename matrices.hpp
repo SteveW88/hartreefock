@@ -12,7 +12,7 @@ protected:
 
 public:
 
-  Matrix(double elements[], int size) : mDim(size){
+  Matrix(const double elements[], int size) : mDim(size){
     mY.resize(mDim);
     for(int i=0; i < mY.size(); i++){
       mY[i].resize(mDim);
@@ -23,7 +23,7 @@ public:
       }
     }
   }
-  
+
   Matrix(int size) : mDim(size){
    mY.resize(mDim);
     for(int i=0; i < mY.size(); i++){
@@ -115,7 +115,7 @@ class DiagMat : public Matrix {
 
 public:
   
-  DiagMat(double elements[], int size) : Matrix(size) {
+  DiagMat(const double elements[], int size) : Matrix(size) {
     for (int i = 0; i < mDim; i++){
       mY[i][i] = elements[i];
     }

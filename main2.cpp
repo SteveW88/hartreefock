@@ -1,12 +1,13 @@
-#include "functions.cpp"
+#include "functions.hpp"
+#include "global.hpp"
 
-#define BIGNUM 10000
 #define dim 7
 
+int BIGNUM = 10000;
+int ioff[10000];
 
 int main(int argc, char *argv[]){
-  
-  int ioff[BIGNUM];
+ 
   ioff[0] = 0;
   for(int i=1; i < BIGNUM; i++)
     ioff[i] = ioff[i-1] + i;
@@ -45,13 +46,14 @@ int main(int argc, char *argv[]){
   do{
     Eprev = Etot;
     Matrix Fock = BuildFock(coreH, Dens, tei);
-    
+   
     Matrix C0 = BuildC0(eigenvalues,eigenvectors,Sso,Fock);
     
     Dens = BuildDensity(C0);
     
     Eelec = ComputeSCF(Dens,coreH,Fock);
     Etot = Eelec + enuc;
+    printf("Etot: %f \n", Etot);
   
   }while(fabs(Etot - Eprev) > 0.000001);
   

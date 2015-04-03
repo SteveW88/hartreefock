@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <fstream>
 #include <cmath>
+#include <string>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
-#include "matrices.hpp"
+#include "functions.hpp"
+#include "global.hpp"
 
-
-void Diagonalize(double *, double *, Matrix );
 
 //////////////////////
 /// Array Indexing ///
@@ -22,7 +22,7 @@ int INDEX(int i,int j){
 /// Read in Files ///
 /////////////////////
 
-double ReadIN(const char * filename){
+double ReadIN(const char filename[]){
   double val;
   std::ifstream File;
   File.open(filename,std::ifstream::in);
@@ -32,12 +32,12 @@ double ReadIN(const char * filename){
   
 }
 
-void ReadIN(const char * filename, double out[]){
+void ReadIN(const char filename[], double out[]){
   FILE *input;
   int i, j, k, l, ij, kl, ijkl;
   double val;
   input = fopen(filename,"r");
-  while(fscanf(input,"%d %d %d %d %1f", &i,&j,&k,&l,&val) != EOF){
+  while(fscanf(input,"%d %d %d %d %lf", &i,&j,&k,&l,&val) != EOF){
     i -= 1;
     j -= 1;
     k -= 1;
@@ -52,12 +52,13 @@ void ReadIN(const char * filename, double out[]){
   
 }
 
-void ReadIN(const char * filename, Matrix & out){
+void ReadIN(const char filename[], Matrix & out){
   FILE *input;
-  double i, j, val;
+  int i, j;
+  double val;
   double dim = out.getDim();
   input = fopen(filename,"r");
-  while(fscanf(input,"%d %d %1f", &i,&j,&val) != EOF){
+  while(fscanf(input,"%d %d %lf", &i,&j,&val) != EOF){
     i -= 1;
     j -= 1;
     out(i,j) = val;
@@ -100,7 +101,7 @@ Matrix BuildFock(Matrix coreH, Matrix DensPrev, double tei[]){
 /// Build Sso ///
 /////////////////
 
-Matrix BuildSso(double eigenval[], double eigenvec[], Matrix coreH){
+Matrix BuildSso(double eigenval[], double eigenvec[], const Matrix & coreH){
   double dim = coreH.getDim();
   DiagMat As = DiagMat(eigenval,dim);
   Matrix Ls = Matrix(eigenvec,dim).T();
@@ -116,9 +117,10 @@ Matrix BuildC0(double eigenval[], double eigenvec[], Matrix Sso, Matrix Fock){
   int dim = Fock.getDim();
   Matrix Fprime = (Sso.T() * Fock * Sso);
   Diagonalize(eigenval,eigenvec,Fprime);
-  Matrix C0prime = Matrix(eigenvec,dim);
-  
-  return (Sso * C0prime);
+  Matrix C0prime = Matrix(eigenvec,dim).T();
+  Matrix C0 = Sso * C0prime;
+
+  return C0;
 
 }
 
@@ -127,7 +129,7 @@ Matrix BuildC0(double eigenval[], double eigenvec[], Matrix Sso, Matrix Fock){
 /// Build Density ///
 /////////////////////
 
-Matrix BuildDensity(Matrix C0){
+Matrix BuildDensity(const Matrix & C0){
   double dim = C0.getDim();
   Matrix Density = Matrix(dim);
   for(int k=0; k < dim; k++){
@@ -147,7 +149,7 @@ Matrix BuildDensity(Matrix C0){
 /// Compute SCF ///
 ///////////////////
   
-double ComputeSCF(Matrix Density, Matrix coreH, Matrix Fock){
+double ComputeSCF(const Matrix & Density, const Matrix & coreH, const Matrix & Fock){
   int dim = coreH.getDim();
   double Eelec = 0;
   for(int i=0; i < dim; i++){
@@ -162,7 +164,7 @@ double ComputeSCF(Matrix Density, Matrix coreH, Matrix Fock){
 /// Diagonalize ///
 ///////////////////
 
-void Diagonlize(double eigenval[], double eigenvec[], Matrix origMat){
+void Diagonalize(double eigenval[], double eigenvec[], Matrix origMat){
   int dim = origMat.getDim();
   double * temparray = origMat.ToArraySTATIC();
   double array[dim*dim];

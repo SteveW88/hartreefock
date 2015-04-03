@@ -7,7 +7,8 @@ objects= functions.o main2.o
 ## Headers, and their dependencies:
 ##
 matrices_hpp = matrices.hpp
-
+functions_hpp = functions.hpp $(matrices_hpp)
+global_hpp = global.hpp
 ## Exectuable:
 ##
 $(OUT_EXEC) : $(objects)
@@ -15,10 +16,10 @@ $(OUT_EXEC) : $(objects)
 
 ## Object Files
 ##
-functions.o: functions.cpp $(matrices_hpp)
+functions.o: functions.cpp $(functions_hpp) $(global_hpp)
 	$(CPP) -c $< $(FLAGS)
 
-main2.o: main2.cpp $(matrices_hpp)
+main2.o: main2.cpp $(functions_hpp) $(global_hpp)
 	$(CPP) -c $< $(FLAGS)
 
 ## Cleanup
