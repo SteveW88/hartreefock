@@ -1,7 +1,7 @@
 CPP=g++
 FLAGS=-g -lgsl -lm
 
-OUT_EXEC = main2
+OUT_EXEC = main
 objects= functions.o main2.o
 
 ## Headers, and their dependencies:

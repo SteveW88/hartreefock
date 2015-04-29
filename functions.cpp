@@ -13,6 +13,9 @@
 //////////////////////
 /// Array Indexing ///
 //////////////////////
+// ioff array populated in main.cpp.
+// This precomputed array reduces computation time
+// of indexing.
 
 int INDEX(int i,int j){
   return (i>j) ? (ioff[i]+j) : (ioff[j]+i);
@@ -21,6 +24,17 @@ int INDEX(int i,int j){
 /////////////////////
 /// Read in Files ///
 /////////////////////
+// Three read in methods defined:
+//
+// double(filename): designed for file containing
+//                   one value. (Typically nuclear repulsion energy)
+//
+// void(filename,array) : designed for file containing two-electron
+//                        repulsion integrals.
+//
+// void(filename,matrix) : designed for file containing one-electron
+//                         integrals.                        
+// 
 
 double ReadIN(const char filename[]){
   double val;
@@ -72,6 +86,9 @@ void ReadIN(const char filename[], Matrix & out){
 ///////////////////
 /// Build Fock  ///
 ///////////////////
+// Constructs Fock matrix using core hamiltonian,
+// density matrix, and two-electron repulsion integrals.
+//
 
 Matrix BuildFock(Matrix coreH, Matrix DensPrev, double tei[]){
   Matrix Fock = coreH;
@@ -100,6 +117,8 @@ Matrix BuildFock(Matrix coreH, Matrix DensPrev, double tei[]){
 /////////////////
 /// Build Sso ///
 /////////////////
+// Constructs symmetric orthogonalization matrix. 
+//
 
 Matrix BuildSso(double eigenval[], double eigenvec[], const Matrix & coreH){
   double dim = coreH.getDim();
@@ -112,6 +131,9 @@ Matrix BuildSso(double eigenval[], double eigenvec[], const Matrix & coreH){
 ////////////////
 /// Build C0 ///
 ////////////////
+// Transforms eigenvectors of new fock matrix
+// into the original AO basis.
+//
 
 Matrix BuildC0(double eigenval[], double eigenvec[], Matrix Sso, Matrix Fock){
   int dim = Fock.getDim();
@@ -128,6 +150,8 @@ Matrix BuildC0(double eigenval[], double eigenvec[], Matrix Sso, Matrix Fock){
 /////////////////////
 /// Build Density ///
 /////////////////////
+// Construct density matrix using occupied MOs.
+//
 
 Matrix BuildDensity(const Matrix & C0){
   double dim = C0.getDim();
@@ -148,6 +172,9 @@ Matrix BuildDensity(const Matrix & C0){
 ///////////////////
 /// Compute SCF ///
 ///////////////////
+// Compute SCF electronic energy using denstiy matrix,
+// core hamiltonian, and fock matrix.
+//
   
 double ComputeSCF(const Matrix & Density, const Matrix & coreH, const Matrix & Fock){
   int dim = coreH.getDim();
@@ -163,17 +190,15 @@ double ComputeSCF(const Matrix & Density, const Matrix & coreH, const Matrix & F
 ///////////////////
 /// Diagonalize ///
 ///////////////////
+// GSL procedure to diagonalize a given matrix.
+//
 
 void Diagonalize(double eigenval[], double eigenvec[], Matrix origMat){
   int dim = origMat.getDim();
-  double * temparray = origMat.ToArraySTATIC();
-  double array[dim*dim];
-  for(int i=0; i < (dim*dim); i++){
-    array[i] = *(temparray+i);
-  }
-
+  double * temparray = origMat.ToArray();
+  
   gsl_matrix_view m
-    = gsl_matrix_view_array (array, dim, dim);
+    = gsl_matrix_view_array (temparray, dim, dim);
 
   gsl_vector_complex *eval = gsl_vector_complex_alloc (dim);
   gsl_matrix_complex *evec = gsl_matrix_complex_alloc (dim, dim);
