@@ -2,7 +2,7 @@ CPP=g++
 FLAGS=-g -lgsl -lm
 
 OUT_EXEC = main
-objects= functions.o main2.o
+objects= functions.o main.o
 
 ## Headers, and their dependencies:
 ##
@@ -19,7 +19,7 @@ $(OUT_EXEC) : $(objects)
 functions.o: functions.cpp $(functions_hpp) $(global_hpp)
 	$(CPP) -c $< $(FLAGS)
 
-main2.o: main2.cpp $(functions_hpp) $(global_hpp)
+main.o: main.cpp $(functions_hpp) $(global_hpp)
 	$(CPP) -c $< $(FLAGS)
 
 ## Cleanup
